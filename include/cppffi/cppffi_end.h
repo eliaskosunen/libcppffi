@@ -18,9 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPP_FFI_IMPL_H
-#define CPP_FFI_IMPL_H
+// NO HEADER GUARDS!
 
-#include "ffi.h"
+#if defined(_MSC_VER) && _MSC_VER < 1910
+#undef constexpr
+#pragma pop_macro("constexpr")
 
-#endif
+#if _MSC_VER <= 1800
+#undef noexcept
+#pragma pop_macro("noexcept")
+#endif // _MSC_VER <= 1800
+
+#endif // defined(_MSC_VER) && _MSC_VER < 1910
