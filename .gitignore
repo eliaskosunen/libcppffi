@@ -1,2 +1,9 @@
+doc/
+test.cpp
 .clang_complete
-a.out
+*.out
+*.a
+*.ll
+*.so*
+*.s
+*.la

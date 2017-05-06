@@ -80,7 +80,7 @@ namespace ffi {
 
     template <>
     struct type<int8_t> {
-        using arg_type = ffi_arg;
+        using arg_type = ffi_sarg;
 
         static constexpr ffi_type& ffitype()
         {
@@ -89,7 +89,7 @@ namespace ffi {
     };
     template <>
     struct type<int16_t> {
-        using arg_type = ffi_arg;
+        using arg_type = ffi_sarg;
 
         static constexpr ffi_type& ffitype()
         {
@@ -98,7 +98,7 @@ namespace ffi {
     };
     template <>
     struct type<int32_t> {
-        using arg_type = ffi_arg;
+        using arg_type = ffi_sarg;
 
         static constexpr ffi_type& ffitype()
         {
@@ -107,7 +107,7 @@ namespace ffi {
     };
     template <>
     struct type<int64_t> {
-        using arg_type = ffi_arg;
+        using arg_type = ffi_sarg;
 
         static constexpr ffi_type& ffitype()
         {

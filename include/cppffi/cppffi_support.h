@@ -35,7 +35,7 @@
 /*#define CPPFFI_CONSTEXPR_ASSERT(e)      \
     do {                                \
         if (!(e)) {                     \
-            throw std::logic_error(#e); \
+            CPPFFI_THROW(std::logic_error(#e)); \
         }                               \
     } while (false)*/
 #define CPPFFI_CONSTEXPR_ASSERT(e)
@@ -182,11 +182,11 @@ namespace ffi {
         }
         constexpr const_reference at(size_type pos) const
         {
-            return pos < m_len
-                       ? *(m_str + pos)
-                       : (throw std::logic_error("ffi::basic_string_view::at: "
-                                                 "pos >= this->size()"),
-                          *m_str);
+            return pos < m_len ? *(m_str + pos)
+                               : (CPPFFI_THROW(std::logic_error(
+                                      "ffi::basic_string_view::at: "
+                                      "pos >= this->size()")),
+                                  *m_str);
         }
 
         constexpr const_reference front() const
@@ -508,13 +508,15 @@ namespace ffi {
 
         reference at(size_type n)
         {
-            return n < Size ? m_elems[n]
-                            : (throw bad_stack_array_access{}, m_elems[0]);
+            return n < Size
+                       ? m_elems[n]
+                       : (CPPFFI_THROW(bad_stack_array_access{}), m_elems[0]);
         }
         constexpr const_reference at(size_type n) const
         {
-            return n < Size ? m_elems[n]
-                            : (throw bad_stack_array_access{}, m_elems[0]);
+            return n < Size
+                       ? m_elems[n]
+                       : (CPPFFI_THROW(bad_stack_array_access{}), m_elems[0]);
         }
 
         reference front() noexcept
@@ -562,18 +564,18 @@ namespace ffi {
     };
 
     template <std::size_t I = 0, typename FuncT, typename... Tp>
-    inline typename std::enable_if<I == sizeof...(Tp), void>::type for_each(
-        std::tuple<Tp...>&,
-        FuncT)  // Unused arguments are given no names.
+    inline typename std::enable_if<I == sizeof...(Tp), void>::type
+    tuple_for_each(std::tuple<Tp...>&, FuncT)
     {
     }
 
     template <std::size_t I = 0, typename FuncT, typename... Tp>
         inline typename std::enable_if <
-        I<sizeof...(Tp), void>::type for_each(std::tuple<Tp...>& t, FuncT f)
+        I<sizeof...(Tp), void>::type tuple_for_each(std::tuple<Tp...>& t,
+                                                    FuncT f)
     {
         f(std::get<I>(t));
-        for_each<I + 1, FuncT, Tp...>(t, f);
+        tuple_for_each<I + 1, FuncT, Tp...>(t, f);
     }
 
     using deleter_type = std::function<void(void*)>;

@@ -18,16 +18,15 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-// NO HEADER GUARDS!
+#ifndef CPPFFI_CONFIG_H
+#define CPPFFI_CONFIG_H
 
-#include "cppffi_config.h"
+#include <exception>
 
-#if defined(_MSC_VER) && _MSC_VER < 1910
-#pragma push_macro("contexpr")
-#define constexpr /*constexpr*/
+#if !defined(__EXCEPTIONS) || defined(CPPFFI_NOTHROW)
+#define CPPFFI_THROW(t) std::terminate()
+#else
+#define CPPFFI_THROW(t) throw t
+#endif
 
-#if _MSC_VER <= 1800
-#pragma push_macro("noexcept")
-#define noexcept /*noexcept*/
-#endif           // _MSC_VER <= 1800
-#endif           // defined(_MSC_VER) && _MSC_VER < 1910
+#endif  // CPPFFI_CONFIG_H

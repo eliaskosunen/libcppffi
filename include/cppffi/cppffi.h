@@ -22,12 +22,12 @@
 #define CPPFFI_H
 
 #include "ffi.h"
+#include <array>
 #include <cassert>
 #include <stdexcept>
 #include <string>
 #include <tuple>
 #include <type_traits>
-#include <vector>
 
 #include "cppffi_begin.h"
 
@@ -63,15 +63,15 @@ namespace ffi {
         callable<ReturnT(ArgsT...)> bind(CallableT&& c);
 
     private:
-        template <typename Container, size_t Index>
-        void _expand_argument_list(Container& types) const;
-        template <typename Container,
-                  size_t Index,
+        template <size_t Index>
+        void _expand_argument_list();
+        template <size_t Index,
                   typename FirstArg,
                   typename... Args>
-        void _expand_argument_list(Container& types) const;
+        void _expand_argument_list();
 
         ffi_cif m_cif;
+        std::array<ffi_type*, sizeof...(ArgsT)> argtypes;
     };
 
     template <typename ReturnT>
@@ -161,7 +161,21 @@ namespace ffi {
         template <size_t Index, typename FirstArg, typename... Args>
         void _expand_argument_list(FirstArg&& arg, Args&&... args);
 
-        std::vector<unique_void_ptr> m_args;
+        template <size_t Index = 0>
+        typename std::enable_if<Index == sizeof...(ArgsT), void>::type
+        _get_argument_addresses(std::array<void*, sizeof...(ArgsT)>&)
+        {
+        }
+        
+        template <size_t Index = 0>
+        typename std::enable_if<Index < sizeof...(ArgsT), void>::type
+        _get_argument_addresses(std::array<void*, sizeof...(ArgsT)>& vec)
+        {
+            vec[Index] = std::addressof(std::get<Index>(m_args));
+            _get_argument_addresses<Index + 1>(vec);
+        }
+
+        std::tuple<ArgsT...> m_args;
         const callable<ReturnT(ArgsT...)>& m_callable;
         ReturnT m_return;
     };

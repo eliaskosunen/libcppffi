@@ -30,16 +30,15 @@ namespace ffi {
     template <typename ReturnT, typename... ArgsT>
     inline cif<ReturnT(ArgsT...)>::cif(abi p_abi)
     {
-        ffi_type* argtypes[sizeof...(ArgsT)]{nullptr};
-        _expand_argument_list<decltype(argtypes), 0, ArgsT...>(argtypes);
-        const auto status =
-            ffi_prep_cif(&m_cif, p_abi, sizeof...(ArgsT),
-                         &type<ReturnT>::ffitype(), &argtypes[0]);
+        constexpr const size_t arg_count = sizeof...(ArgsT);
+        _expand_argument_list<0, ArgsT...>();
+        const auto status = ffi_prep_cif(&m_cif, p_abi, arg_count,
+                                         &type<ReturnT>::ffitype(), &argtypes[0]);
         if (status == FFI_BAD_TYPEDEF) {
-            throw bad_typedef();
+            CPPFFI_THROW(bad_typedef());
         }
         if (status == FFI_BAD_ABI) {
-            throw bad_abi();
+            CPPFFI_THROW(bad_abi());
         }
     }
 
@@ -52,20 +51,18 @@ namespace ffi {
     }
 
     template <typename ReturnT, typename... ArgsT>
-    template <typename Container, size_t Index>
-    inline void cif<ReturnT(ArgsT...)>::_expand_argument_list(Container&) const
+    template <size_t Index>
+    inline void cif<ReturnT(ArgsT...)>::_expand_argument_list()
     {
     }
     template <typename ReturnT, typename... ArgsT>
-    template <typename Container,
-              size_t Index,
+    template <size_t Index,
               typename FirstArg,
               typename... Args>
-    inline void cif<ReturnT(ArgsT...)>::_expand_argument_list(
-        Container& types) const
+    inline void cif<ReturnT(ArgsT...)>::_expand_argument_list()
     {
-        types[Index] = &type<FirstArg>::ffitype();
-        _expand_argument_list<decltype(types), Index + 1, Args...>(types);
+        argtypes[Index] = &type<FirstArg>::ffitype();
+        _expand_argument_list<Index + 1, Args...>();
     }
 
     template <typename ReturnT>
@@ -74,10 +71,10 @@ namespace ffi {
         const auto status =
             ffi_prep_cif(&m_cif, p_abi, 0, &type<ReturnT>::ffitype(), nullptr);
         if (status == FFI_BAD_TYPEDEF) {
-            throw bad_typedef();
+            CPPFFI_THROW(bad_typedef());
         }
         if (status == FFI_BAD_ABI) {
-            throw bad_abi();
+            CPPFFI_THROW(bad_abi());
         }
     }
 
@@ -152,13 +149,11 @@ namespace ffi {
     {
         _expand_argument_list<0>(std::forward<ArgsT>(args)...);
 
-        std::vector<void*> arg_ptrs;
-        for (auto& a : m_args) {
-            arg_ptrs.push_back(static_cast<void*>(a.get()));
-        }
+        std::array<void*, sizeof...(ArgsT)> arg_ptrs;
+        _get_argument_addresses<0>(arg_ptrs);
 
         typename type<ReturnT>::arg_type ret;
-        ffi_call(&p_callable.m_cif.m_cif, FFI_FN(&p_callable.m_callable), &ret,
+        ffi_call(&p_callable.m_cif.m_cif, FFI_FN(p_callable.m_callable), &ret,
                  &arg_ptrs[0]);
         m_return = static_cast<ReturnT>(ret);
     }
@@ -185,16 +180,18 @@ namespace ffi {
     template <size_t Index, typename Arg>
     void call_context<ReturnT(ArgsT...)>::_expand_argument_list(Arg&& arg)
     {
-        //m_args[Index] = unique_void(new Arg(arg));
-        m_args.push_back(unique_void(new Arg(arg)));
+        // m_args[Index] = unique_void(new Arg(arg));
+        /* m_args.push_back(unique_void(new Arg(arg))); */
+        std::get<Index>(m_args) = std::forward<Arg>(arg);
     }
     template <typename ReturnT, typename... ArgsT>
     template <size_t Index, typename FirstArg, typename... Args>
     void call_context<ReturnT(ArgsT...)>::_expand_argument_list(FirstArg&& arg,
                                                                 Args&&... args)
     {
-        //m_args[Index] = unique_void(new FirstArg(arg));
-        m_args.push_back(unique_void(new FirstArg(arg)));
+        // m_args[Index] = unique_void(new FirstArg(arg));
+        /* m_args.push_back(unique_void(new FirstArg(arg))); */
+        std::get<Index>(m_args) = std::forward<FirstArg>(arg);
         _expand_argument_list<Index + 1>(std::forward<Args>(args)...);
     }
 
@@ -203,7 +200,7 @@ namespace ffi {
         : m_callable(p_callable)
     {
         typename type<ReturnT>::arg_type ret;
-        ffi_call(&p_callable.m_cif.m_cif, FFI_FN(&p_callable.m_callable), &ret,
+        ffi_call(&p_callable.m_cif.m_cif, FFI_FN(p_callable.m_callable), &ret,
                  nullptr);
         m_return = static_cast<ReturnT>(ret);
     }
