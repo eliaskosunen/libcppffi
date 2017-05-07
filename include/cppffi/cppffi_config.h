@@ -18,15 +18,7 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#ifndef CPPFFI_CONFIG_H
-#define CPPFFI_CONFIG_H
+// NO HEADER GUARDS!
 
-#include <exception>
+//#define CPPFFI_NOTHROW
 
-#if !defined(__EXCEPTIONS) || defined(CPPFFI_NOTHROW)
-#define CPPFFI_THROW(t) std::terminate()
-#else
-#define CPPFFI_THROW(t) throw t
-#endif
-
-#endif  // CPPFFI_CONFIG_H

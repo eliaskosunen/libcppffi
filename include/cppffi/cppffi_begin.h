@@ -20,6 +20,7 @@
 
 // NO HEADER GUARDS!
 
+#include <exception>
 #include "cppffi_config.h"
 
 #if defined(_MSC_VER) && _MSC_VER < 1910
@@ -31,3 +32,9 @@
 #define noexcept /*noexcept*/
 #endif           // _MSC_VER <= 1800
 #endif           // defined(_MSC_VER) && _MSC_VER < 1910
+
+#if !defined(__EXCEPTIONS) || defined(CPPFFI_NOTHROW)
+#define CPPFFI_THROW(t) std::terminate()
+#else
+#define CPPFFI_THROW(t) throw t
+#endif

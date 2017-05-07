@@ -32,8 +32,8 @@ namespace ffi {
     {
         constexpr const size_t arg_count = sizeof...(ArgsT);
         _expand_argument_list<0, ArgsT...>();
-        const auto status = ffi_prep_cif(&m_cif, p_abi, arg_count,
-                                         &type<ReturnT>::ffitype(), &argtypes[0]);
+        const auto status = ffi_prep_cif(
+            &m_cif, p_abi, arg_count, &type<ReturnT>::ffitype(), &argtypes[0]);
         if (status == FFI_BAD_TYPEDEF) {
             CPPFFI_THROW(bad_typedef());
         }
@@ -56,9 +56,7 @@ namespace ffi {
     {
     }
     template <typename ReturnT, typename... ArgsT>
-    template <size_t Index,
-              typename FirstArg,
-              typename... Args>
+    template <size_t Index, typename FirstArg, typename... Args>
     inline void cif<ReturnT(ArgsT...)>::_expand_argument_list()
     {
         argtypes[Index] = &type<FirstArg>::ffitype();
@@ -108,6 +106,13 @@ namespace ffi {
     }
 
     template <typename ReturnT, typename... ArgsT>
+    template <typename... Args>
+    inline ReturnT callable<ReturnT(ArgsT...)>::operator()(Args&&... args) const
+    {
+        return call(std::forward<Args>(args)...).ret_move();
+    }
+
+    template <typename ReturnT, typename... ArgsT>
     template <size_t Index, typename ArgPack, typename Arg>
     inline void callable<ReturnT(ArgsT...)>::_fill_arg_vec(ArgPack& vec,
                                                            Arg arg) const
@@ -141,6 +146,12 @@ namespace ffi {
         return call_context<ReturnT()>{*this};
     }
 
+    template <typename ReturnT>
+    inline ReturnT callable<ReturnT()>::operator()() const
+    {
+        return call().ret_move();
+    }
+
     template <typename ReturnT, typename... ArgsT>
     call_context<ReturnT(ArgsT...)>::call_context(
         const callable<ReturnT(ArgsT...)>& p_callable,
@@ -155,23 +166,31 @@ namespace ffi {
         typename type<ReturnT>::arg_type ret;
         ffi_call(&p_callable.m_cif.m_cif, FFI_FN(p_callable.m_callable), &ret,
                  &arg_ptrs[0]);
-        m_return = static_cast<ReturnT>(ret);
+        m_return = detail::call_return<ReturnT>::access(std::move(ret));
     }
 
     template <typename ReturnT, typename... ArgsT>
-    ReturnT& call_context<ReturnT(ArgsT...)>::ret() noexcept
+    ReturnT call_context<ReturnT(ArgsT...)>::ret() const
+    {
+        return static_cast<ReturnT>(m_return);
+    }
+
+    template <typename ReturnT, typename... ArgsT>
+    typename detail::call_return<ReturnT>::type&
+    call_context<ReturnT(ArgsT...)>::ret_ref()
     {
         return m_return;
     }
     template <typename ReturnT, typename... ArgsT>
-    const ReturnT& call_context<ReturnT(ArgsT...)>::ret() const noexcept
+    const typename detail::call_return<ReturnT>::type&
+    call_context<ReturnT(ArgsT...)>::ret_ref() const
     {
         return m_return;
     }
 
     template <typename ReturnT, typename... ArgsT>
-    ReturnT&& call_context<ReturnT(ArgsT...)>::move_ret() noexcept(
-        std::is_nothrow_move_constructible<ReturnT>::value)
+    typename detail::call_return<ReturnT>::type&&
+    call_context<ReturnT(ArgsT...)>::ret_move()
     {
         return std::move(m_return);
     }
@@ -202,23 +221,31 @@ namespace ffi {
         typename type<ReturnT>::arg_type ret;
         ffi_call(&p_callable.m_cif.m_cif, FFI_FN(p_callable.m_callable), &ret,
                  nullptr);
-        m_return = static_cast<ReturnT>(ret);
+        m_return = detail::call_return<ReturnT>::access(std::move(ret));
     }
 
     template <typename ReturnT>
-    ReturnT& call_context<ReturnT()>::ret() noexcept
+    ReturnT call_context<ReturnT()>::ret() const
+    {
+        return static_cast<ReturnT>(m_return);
+    }
+
+    template <typename ReturnT>
+    typename detail::call_return<ReturnT>::type&
+    call_context<ReturnT()>::ret_ref()
     {
         return m_return;
     }
     template <typename ReturnT>
-    const ReturnT& call_context<ReturnT()>::ret() const noexcept
+    const typename detail::call_return<ReturnT>::type&
+    call_context<ReturnT()>::ret_ref() const
     {
         return m_return;
     }
 
     template <typename ReturnT>
-    ReturnT&& call_context<ReturnT()>::move_ret() noexcept(
-        std::is_nothrow_move_constructible<ReturnT>::value)
+    typename detail::call_return<ReturnT>::type&&
+    call_context<ReturnT()>::ret_move()
     {
         return std::move(m_return);
     }
@@ -228,7 +255,7 @@ namespace ffi {
     {
         cif<ReturnT(ArgsT...)> c;
         auto f = c.bind(func);
-        return f.call(std::forward<ArgsT>(args)...).move_ret();
+        return f.call(std::forward<ArgsT>(args)...).ret();
     }
 }  // namespace ffi
 

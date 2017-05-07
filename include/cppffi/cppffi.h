@@ -37,6 +37,11 @@
 namespace ffi {
     using abi = ffi_abi;
 
+    /**
+     * Call InterFace.
+     * Represents a function prototype that can be bound to multiple callable
+     * objects
+     */
     template <typename T>
     class cif;
 
@@ -54,20 +59,18 @@ namespace ffi {
 
         cif(abi p_abi = FFI_DEFAULT_ABI);
 
-        CPPFFI_DELETE_CONSTEXPR_COPY_CONSTRUCT_ASSIGN(cif)
-        CPPFFI_DEFAULT_CONSTEXPR_MOVE_CONSTRUCT_ASSIGN(cif)
-
-        ~cif() noexcept = default;
-
-        template <typename CallableT>
-        callable<ReturnT(ArgsT...)> bind(CallableT&& c);
+        /**
+         * Bind a function to the interface and produce a callable object
+         * \param c Function to bind to
+         * \return  callable
+         */
+        template <typename Callable>
+        callable<ReturnT(ArgsT...)> bind(Callable&& c);
 
     private:
         template <size_t Index>
         void _expand_argument_list();
-        template <size_t Index,
-                  typename FirstArg,
-                  typename... Args>
+        template <size_t Index, typename FirstArg, typename... Args>
         void _expand_argument_list();
 
         ffi_cif m_cif;
@@ -82,11 +85,11 @@ namespace ffi {
 
         cif(abi p_abi = FFI_DEFAULT_ABI);
 
-        CPPFFI_DELETE_CONSTEXPR_COPY_CONSTRUCT_ASSIGN(cif)
-        CPPFFI_DEFAULT_CONSTEXPR_MOVE_CONSTRUCT_ASSIGN(cif)
-
-        ~cif() noexcept = default;
-
+        /**
+         * Bind a function to the interface and produce a callable object
+         * \param c Function to bind to
+         * \return  callable
+         */
         template <typename CallableT>
         callable<ReturnT()> bind(CallableT&& c);
 
@@ -107,7 +110,8 @@ namespace ffi {
         template <typename... Args>
         call_context<ReturnT(ArgsT...)> call(Args&&... args) const;
 
-        ReturnT operator()(ArgsT... args) const;
+        template <typename... Args>
+        ReturnT operator()(Args&&... args) const;
 
     private:
         template <size_t Index, typename ArgPack, typename Arg>
@@ -143,17 +147,42 @@ namespace ffi {
         cif<ReturnT()>& m_cif;
     };
 
+    namespace detail {
+        template <typename ReturnT>
+        struct call_return {
+            using type = ReturnT;
+
+            template <typename T>
+            static type access(T&& val)
+            {
+                return std::forward<T>(val);
+            }
+        };
+
+        template <>
+        struct call_return<void> {
+            using type = int;
+
+            template <typename T>
+            static type access(T&&)
+            {
+                return 0;
+            }
+        };
+    }
+
     template <typename ReturnT, typename... ArgsT>
     class call_context<ReturnT(ArgsT...)> {
     public:
         call_context(const callable<ReturnT(ArgsT...)>& p_callable,
                      ArgsT&&... args);
 
-        ReturnT& ret() noexcept;
-        const ReturnT& ret() const noexcept;
+        ReturnT ret() const;
 
-        ReturnT&& move_ret() noexcept(
-            std::is_nothrow_move_constructible<ReturnT>::value);
+        typename detail::call_return<ReturnT>::type& ret_ref();
+        const typename detail::call_return<ReturnT>::type& ret_ref() const;
+
+        typename detail::call_return<ReturnT>::type&& ret_move();
 
     private:
         template <size_t Index, typename Arg>
@@ -166,10 +195,11 @@ namespace ffi {
         _get_argument_addresses(std::array<void*, sizeof...(ArgsT)>&)
         {
         }
-        
+
         template <size_t Index = 0>
-        typename std::enable_if<Index < sizeof...(ArgsT), void>::type
-        _get_argument_addresses(std::array<void*, sizeof...(ArgsT)>& vec)
+            typename std::enable_if <
+            Index<sizeof...(ArgsT), void>::type _get_argument_addresses(
+                std::array<void*, sizeof...(ArgsT)>& vec)
         {
             vec[Index] = std::addressof(std::get<Index>(m_args));
             _get_argument_addresses<Index + 1>(vec);
@@ -177,7 +207,7 @@ namespace ffi {
 
         std::tuple<ArgsT...> m_args;
         const callable<ReturnT(ArgsT...)>& m_callable;
-        ReturnT m_return;
+        typename detail::call_return<ReturnT>::type m_return;
     };
 
     template <typename ReturnT>
@@ -185,15 +215,16 @@ namespace ffi {
     public:
         call_context(const callable<ReturnT()>& p_callable);
 
-        ReturnT& ret() noexcept;
-        const ReturnT& ret() const noexcept;
+        ReturnT ret() const;
 
-        ReturnT&& move_ret() noexcept(
-            std::is_nothrow_move_constructible<ReturnT>::value);
+        typename detail::call_return<ReturnT>::type& ret_ref();
+        const typename detail::call_return<ReturnT>::type& ret_ref() const;
+
+        typename detail::call_return<ReturnT>::type&& ret_move();
 
     private:
         const callable<ReturnT()>& m_callable;
-        ReturnT m_return;
+        typename detail::call_return<ReturnT>::type m_return;
     };
 
     template <typename ReturnT, typename... ArgsT>

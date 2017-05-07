@@ -1,5 +1,5 @@
 doc/
-test.cpp
+test*.cpp
 .clang_complete
 *.out
 *.a
@@ -7,3 +7,4 @@ test.cpp
 *.so*
 *.s
 *.la
+*.ycm*
