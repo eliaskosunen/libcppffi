@@ -32,43 +32,36 @@ matrix:
           compiler: gcc
           addons: &cov
             apt:
-                packages: ["libffi", "g++-5", "lcov", "ggcov", "curl"]
+                packages: ["libffi-dev", "libffi6", "g++-5", "lcov", "ggcov", "curl"]
                 sources: *apt_sources
 
-        # GCC 7
-        - env: CXX_COMPILER=g++-7 CXX_STANDARD=17
-          compiler: gcc
-          addons: &gcc7
-            apt:
-                packages: ["libffi", "g++-7"]
-                sources: *apt_sources
         # GCC 6
-        - env: CXX_COMPILER=g++-6 CXX_STANDARD=14
+        - env: CXX_COMPILER=g++-6 CXX_STANDARD=17
           compiler: gcc
           addons: &gcc6
             apt:
-                packages: ["libffi", "g++-6"]
+                packages: ["libffi-dev", "libffi6", "g++-6"]
                 sources: *apt_sources
         # GCC 5
         - env: CXX_COMPILER=g++-5 CXX_STANDARD=14
           compiler: gcc
           addons: &gcc5
             apt:
-                packages: ["libffi", "g++-5"]
+                packages: ["libffi-dev", "libffi6", "g++-5"]
                 sources: *apt_sources
         # GCC 4.9
         - env: CXX_COMPILER=g++-4.9 CXX_STANDARD=11
           compiler: gcc
           addons: &gcc49
             apt:
-                packages: ["libffi", "g++-4.9"]
+                packages: ["libffi-dev", "libffi6", "g++-4.9"]
                 sources: *apt_sources
         # GCC 4.5
         - env: CXX_COMPILER=g++-4.5 CXX_STANDARD=11
           compiler: gcc
           addons: &gcc45
             apt:
-                packages: ["libffi", "g++-4.5"]
+                packages: ["libffi-dev", "libffi6", "g++-4.5"]
                 sources: *apt_sources
 
         # Clang 4
@@ -76,28 +69,28 @@ matrix:
           compiler: clang
           addons: &clang4
             apt:
-                packages: ["libffi", "clang-4.0"]
+                packages: ["libffi-dev", "libffi6", "clang-4.0"]
                 sources: *apt_sources
         # Clang 3.9
         - env: CXX_COMPILER=clang++-3.9 CXX_STANDARD=14
           compiler: clang
           addons: &clang39
             apt:
-                packages: ["libffi", "clang-3.9"]
+                packages: ["libffi-dev", "libffi6", "clang-3.9"]
                 sources: *apt_sources
         # Clang 3.6
         - env: CXX_COMPILER=clang++-3.6 CXX_STANDARD=14
           compiler: clang
           addons: &clang36
             apt:
-                packages: ["libffi", "clang-3.6"]
+                packages: ["libffi-dev", "libffi6", "clang-3.6"]
                 sources: *apt_sources
         # Clang 3.3
         - env: CXX_COMPILER=clang++-3.3 CXX_STANDARD=11
           compiler: clang
           addons: &clang33
             apt:
-                packages: ["libffi", "clang-3.3"]
+                packages: ["libffi-dev", "libffi6", "clang-3.3"]
                 sources: *apt_sources
                 
 before_script:
