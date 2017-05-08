@@ -96,7 +96,6 @@ matrix:
 before_script:
     - export CXX=${CXX_COMPILER}
     - ${CXX} --version
-    - echo "CXX standard: ${CXX_STANDARD}"
     - git submodule update --init --recursive
 
 script:
