@@ -42,6 +42,16 @@ namespace ffi {
     };
 
     template <>
+    struct type<bool> {
+        using arg_type = ffi_arg;
+
+        static constexpr ffi_type& ffitype()
+        {
+            return ffi_type_uint8;
+        }
+    };
+
+    template <>
     struct type<uint8_t> {
         using arg_type = ffi_arg;
 

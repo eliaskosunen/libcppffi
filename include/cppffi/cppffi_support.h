@@ -29,6 +29,8 @@
 
 #include "cppffi_begin.h"
 
+#define CPPFFI_FN(f) (reinterpret_cast<void (*)(void)>(f))
+
 namespace ffi {
     class exception : public std::exception {
     };

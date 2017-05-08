@@ -29,11 +29,13 @@
 namespace ffi {
     template <typename ReturnT, typename... ArgsT>
     inline cif<ReturnT(ArgsT...)>::cif(abi p_abi)
+        : m_cif{}, m_argtypes{{nullptr}}
     {
         constexpr const size_t arg_count = sizeof...(ArgsT);
         _expand_argument_list<0, ArgsT...>();
-        const auto status = ffi_prep_cif(
-            &m_cif, p_abi, arg_count, &type<ReturnT>::ffitype(), &argtypes[0]);
+        const auto status =
+            ffi_prep_cif(&m_cif, p_abi, arg_count, &type<ReturnT>::ffitype(),
+                         &m_argtypes[0]);
         if (status == FFI_BAD_TYPEDEF) {
             CPPFFI_THROW(bad_typedef());
         }
@@ -59,7 +61,7 @@ namespace ffi {
     template <size_t Index, typename FirstArg, typename... Args>
     inline void cif<ReturnT(ArgsT...)>::_expand_argument_list()
     {
-        argtypes[Index] = &type<FirstArg>::ffitype();
+        m_argtypes[Index] = &type<FirstArg>::ffitype();
         _expand_argument_list<Index + 1, Args...>();
     }
 
@@ -156,7 +158,7 @@ namespace ffi {
     call_context<ReturnT(ArgsT...)>::call_context(
         const callable<ReturnT(ArgsT...)>& p_callable,
         ArgsT&&... args)
-        : m_callable(p_callable)
+        : m_args{}, m_callable(p_callable), m_return{}
     {
         _expand_argument_list<0>(std::forward<ArgsT>(args)...);
 
@@ -164,9 +166,10 @@ namespace ffi {
         _get_argument_addresses<0>(arg_ptrs);
 
         typename type<ReturnT>::arg_type ret;
-        ffi_call(&p_callable.m_cif.m_cif, FFI_FN(p_callable.m_callable), &ret,
-                 &arg_ptrs[0]);
-        m_return = detail::call_return<ReturnT>::access(std::move(ret));
+        ffi_call(&p_callable.m_cif.m_cif, CPPFFI_FN(p_callable.m_callable),
+                 &ret, &arg_ptrs[0]);
+        m_return =
+            detail::call_return<ReturnT>::access(static_cast<ReturnT&&>(ret));
     }
 
     template <typename ReturnT, typename... ArgsT>
@@ -219,9 +222,10 @@ namespace ffi {
         : m_callable(p_callable)
     {
         typename type<ReturnT>::arg_type ret;
-        ffi_call(&p_callable.m_cif.m_cif, FFI_FN(p_callable.m_callable), &ret,
-                 nullptr);
-        m_return = detail::call_return<ReturnT>::access(std::move(ret));
+        ffi_call(&p_callable.m_cif.m_cif, CPPFFI_FN(p_callable.m_callable),
+                 &ret, nullptr);
+        m_return =
+            detail::call_return<ReturnT>::access(static_cast<ReturnT&&>(ret));
     }
 
     template <typename ReturnT>
@@ -254,8 +258,7 @@ namespace ffi {
     inline ReturnT call(ReturnT (&func)(ArgsT...), ArgsT&&... args)
     {
         cif<ReturnT(ArgsT...)> c;
-        auto f = c.bind(func);
-        return f.call(std::forward<ArgsT>(args)...).ret();
+        return c.bind(func).call(std::forward<ArgsT>(args)...).ret();
     }
 }  // namespace ffi
 

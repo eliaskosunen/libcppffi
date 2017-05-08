@@ -1,5 +1,8 @@
 # libcppffi
 
+[![Build Status](https://travis-ci.org/eliaskosunen/libcppffi.svg?branch=master)](https://travis-ci.org/eliaskosunen/libcppffi)
+[![Coverage Status](https://coveralls.io/repos/github/eliaskosunen/libcppffi/badge.svg?branch=master)](https://coveralls.io/github/eliaskosunen/libcppffi?branch=master)
+
 Header-only templated C++ wrapper over the C library [libffi](https://github.com/libffi/libffi)
 
 WORK IN PROGRESS. It's buggy and lacks features. There isn't any documentation yet.

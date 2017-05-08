@@ -74,7 +74,7 @@ namespace ffi {
         void _expand_argument_list();
 
         ffi_cif m_cif;
-        std::array<ffi_type*, sizeof...(ArgsT)> argtypes;
+        std::array<ffi_type*, sizeof...(ArgsT)> m_argtypes;
     };
 
     template <typename ReturnT>
@@ -152,10 +152,9 @@ namespace ffi {
         struct call_return {
             using type = ReturnT;
 
-            template <typename T>
-            static type access(T&& val)
+            static type access(type&& val)
             {
-                return std::forward<T>(val);
+                return std::forward<type>(val);
             }
         };
 

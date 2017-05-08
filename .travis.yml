@@ -1,0 +1,125 @@
+# Based on:
+# https://github.com/varuna-lang/varuna/blob/master/.travis.yml
+# https://github.com/boostorg/hana/blob/master/.travis.yml
+# https://github.com/onqtam/doctest/blob/master/.travis.yml
+# https://github.com/ChaiScript/ChaiScript/blob/master/.travis.yml
+
+language: cpp
+dist: trusty
+
+git:
+    depth: 5
+
+addons:
+    apt:
+        sources: &apt_sources
+            - ubuntu-toolchain-r-test
+
+env:
+    global:
+        - secure: "DXSnWV/UurJROOXN7MfFFACIg06ViQ9OVIg6OcRznci7jzzrRiCM+V5NqG93pBdCITG/KnytC8/gKmto7/RpZ/8AWuk31kQ+kM8MtIQ5NBggF5HircxzXSnWygv+emVWbYwY3t7Duq9Dl+opaCPix9sMooXp/OINPf4Louzk7P+/BLb0wDwdDEUxajZvogqA0YUleBmd006bGD/l2HxSb0Sytxs/KOOMChwxFVv0m4fYM+QXgTnijtkJZz6e6Om1tF8fZG2savH+J3RTDyZKXR5o3eshnZfR/lAs00MU0XwsQL4EPflPNMxigg2zqOPZWDiNiLFvWlg/Gr8CdI2Oq9vCfSzowB3hJc6rjypZPMG7TXB+ua2ydAa0fB3K3gTHsOjWoZ3wYGApiJpdttObk7/achFDtW3TJdanYCVfaBVjmZfEwXIIaqWM60ZdLw0bbE9068qg6xdnG+7Unv5L20Tu5G07v/L6LeJUh25cyiRlcmd6kVoZU+Hsufk7hZdR/ih24Os8IvaKIXIhNRzXsOWe6taLcIroBivor+j2S6YPylQ4SqynFiE4C6yBmmCluXqmT/pq5Jx8662Y8dNj3/fx3HIWszRlTU9ZGUnF06/BifNH4tY/0/zuxEcAoiiDnu6akHDy1pVqoSm4aPyxWQqbWWuLxcca21+LwRAXAYU="
+    matrix:
+        - TRAVIS_EMPTY_JOB_WORKAROUND=true
+
+os: linux
+
+matrix:
+    exclude:
+        - env: TRAVIS_EMPTY_JOB_WORKAROUND=true
+    include:
+        # coverage
+        - env: COVERALLS=ON CXX_COMPILER=g++-5 CXX_STANDARD=14
+          compiler: gcc
+          addons: &cov
+            apt:
+                packages: ["libffi", "g++-5", "lcov", "ggcov", "curl"]
+                sources: *apt_sources
+
+        # GCC 7
+        - env: CXX_COMPILER=g++-7 CXX_STANDARD=17
+          compiler: gcc
+          addons: &gcc7
+            apt:
+                packages: ["libffi", "g++-7"]
+                sources: *apt_sources
+        # GCC 6
+        - env: CXX_COMPILER=g++-6 CXX_STANDARD=14
+          compiler: gcc
+          addons: &gcc6
+            apt:
+                packages: ["libffi", "g++-6"]
+                sources: *apt_sources
+        # GCC 5
+        - env: CXX_COMPILER=g++-5 CXX_STANDARD=14
+          compiler: gcc
+          addons: &gcc5
+            apt:
+                packages: ["libffi", "g++-5"]
+                sources: *apt_sources
+        # GCC 4.9
+        - env: CXX_COMPILER=g++-4.9 CXX_STANDARD=11
+          compiler: gcc
+          addons: &gcc49
+            apt:
+                packages: ["libffi", "g++-4.9"]
+                sources: *apt_sources
+        # GCC 4.5
+        - env: CXX_COMPILER=g++-4.5 CXX_STANDARD=11
+          compiler: gcc
+          addons: &gcc45
+            apt:
+                packages: ["libffi", "g++-4.5"]
+                sources: *apt_sources
+
+        # Clang 4
+        - env: CXX_COMPILER=clang++-4.0 CXX_STANDARD=1z
+          compiler: clang
+          addons: &clang4
+            apt:
+                packages: ["libffi", "clang-4.0"]
+                sources: *apt_sources
+        # Clang 3.9
+        - env: CXX_COMPILER=clang++-3.9 CXX_STANDARD=14
+          compiler: clang
+          addons: &clang39
+            apt:
+                packages: ["libffi", "clang-3.9"]
+                sources: *apt_sources
+        # Clang 3.6
+        - env: CXX_COMPILER=clang++-3.6 CXX_STANDARD=14
+          compiler: clang
+          addons: &clang36
+            apt:
+                packages: ["libffi", "clang-3.6"]
+                sources: *apt_sources
+        # Clang 3.3
+        - env: CXX_COMPILER=clang++-3.3 CXX_STANDARD=11
+          compiler: clang
+          addons: &clang33
+            apt:
+                packages: ["libffi", "clang-3.3"]
+                sources: *apt_sources
+                
+before_script:
+    - export CXX=${CXX_COMPILER}
+    - ${CXX} --version
+    - echo "CXX standard: ${CXX_STANDARD}"
+    - git submodule update --init --recursive
+
+script:
+    - mkdir build && cd build
+
+    # Coverage
+    - |
+      if [[ "${COVERALLS}" == "ON" ]]; then
+        export COVERALLS_SERVICE_NAME=travis-ci
+        export COVERALLS_REPO_TOKEN=${repo_token}
+        export GCOV=gcov-5
+        cmake -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCOVERALLS=ON ..
+        make -k -j2 && make coveralls
+        exit
+      fi
+
+    - cmake -G "Unix Makefiles" -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} ..
+    - make -j2
+    - ./tests/tests

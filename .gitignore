@@ -1,3 +1,4 @@
+build/
 doc/
 test*.cpp
 .clang_complete
@@ -8,3 +9,4 @@ test*.cpp
 *.s
 *.la
 *.ycm*
+compile_commands.json
