@@ -92,7 +92,18 @@ matrix:
             apt:
                 packages: ["libffi-dev", "libffi6", "clang-3.3"]
                 sources: *apt_sources
-                
+
+install:
+    - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
+    - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
+
+    # Install a recent CMake
+    - CMAKE_URL="https://cmake.org/files/v3.6/cmake-3.6.1-Linux-x86_64.tar.gz"
+    - mkdir -p cmake && travis_retry wget --no-check-certificate --quiet -O - ${CMAKE_URL} | tar --strip-components=1 -xz -C cmake
+    - export PATH=${DEPS_DIR}/cmake/bin:${PATH}
+
+    - cd ${TRAVIS_BUILD_DIR}
+
 before_script:
     - export CXX=${CXX_COMPILER}
     - ${CXX} --version
