@@ -14,6 +14,11 @@ addons:
     apt:
         sources: &apt_sources
             - ubuntu-toolchain-r-test
+            - llvm-toolchain-trusty
+            - llvm-toolchain-trusty-3.5
+            - llvm-toolchain-trusty-3.7
+            - llvm-toolchain-trusty-3.9
+            - llvm-toolchain-trusty-4.0
 
 env:
     global:
@@ -78,19 +83,19 @@ matrix:
             apt:
                 packages: ["libffi-dev", "libffi6", "clang-3.9"]
                 sources: *apt_sources
-        # Clang 3.6
-        - env: CXX_COMPILER=clang++-3.6 CXX_STANDARD=14
+        # Clang 3.7
+        - env: CXX_COMPILER=clang++-3.7 CXX_STANDARD=14
           compiler: clang
-          addons: &clang36
+          addons: &clang37
             apt:
-                packages: ["libffi-dev", "libffi6", "clang-3.6"]
+                packages: ["libffi-dev", "libffi6", "clang-3.7"]
                 sources: *apt_sources
-        # Clang 3.3
-        - env: CXX_COMPILER=clang++-3.3 CXX_STANDARD=11
+        # Clang 3.5
+        - env: CXX_COMPILER=clang++-3.5 CXX_STANDARD=11
           compiler: clang
-          addons: &clang33
+          addons: &clang35
             apt:
-                packages: ["libffi-dev", "libffi6", "clang-3.3"]
+                packages: ["libffi-dev", "libffi6", "clang-3.5"]
                 sources: *apt_sources
 
 install:

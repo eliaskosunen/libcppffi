@@ -1,6 +1,5 @@
 build/
 doc/
-test*.cpp
 .clang_complete
 *.out
 *.a
