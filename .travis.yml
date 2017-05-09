@@ -15,10 +15,10 @@ addons:
         sources: &apt_sources
             - ubuntu-toolchain-r-test
             - llvm-toolchain-trusty
-            - llvm-toolchain-trusty-3.5
-            - llvm-toolchain-trusty-3.7
             - llvm-toolchain-trusty-3.9
             - llvm-toolchain-trusty-4.0
+            - llvm-toolchain-precise
+            - llvm-toolchain-precise-3.6
 
 env:
     global:
@@ -38,6 +38,14 @@ matrix:
           addons: &cov
             apt:
                 packages: ["libffi-dev", "libffi6", "g++-5", "lcov", "ggcov", "curl"]
+                sources: *apt_sources
+
+        # GCC (default)
+        - env: CXX_COMPILER=g++ CXX_STANDARD=0x
+          compiler: gcc
+          addons: &gcc
+            apt:
+                packages: ["libffi-dev", "libffi6"]
                 sources: *apt_sources
 
         # GCC 6
@@ -61,13 +69,6 @@ matrix:
             apt:
                 packages: ["libffi-dev", "libffi6", "g++-4.9"]
                 sources: *apt_sources
-        # GCC 4.5
-        - env: CXX_COMPILER=g++-4.5 CXX_STANDARD=11
-          compiler: gcc
-          addons: &gcc45
-            apt:
-                packages: ["libffi-dev", "libffi6", "g++-4.5"]
-                sources: *apt_sources
 
         # Clang 4
         - env: CXX_COMPILER=clang++-4.0 CXX_STANDARD=1z
@@ -83,21 +84,15 @@ matrix:
             apt:
                 packages: ["libffi-dev", "libffi6", "clang-3.9"]
                 sources: *apt_sources
-        # Clang 3.7
-        - env: CXX_COMPILER=clang++-3.7 CXX_STANDARD=14
+        # Clang 3.6
+        - env: CXX_COMPILER=clang++-3.6 CXX_STANDARD=11
           compiler: clang
-          addons: &clang37
+          dist: precise
+          addons: &clang36
             apt:
-                packages: ["libffi-dev", "libffi6", "clang-3.7"]
+                packages: ["libffi-dev", "libffi6", "clang-3.6"]
                 sources: *apt_sources
-        # Clang 3.5
-        - env: CXX_COMPILER=clang++-3.5 CXX_STANDARD=11
-          compiler: clang
-          addons: &clang35
-            apt:
-                packages: ["libffi-dev", "libffi6", "clang-3.5"]
-                sources: *apt_sources
-
+        
 install:
     - DEPS_DIR="${TRAVIS_BUILD_DIR}/deps"
     - mkdir -p ${DEPS_DIR} && cd ${DEPS_DIR}
@@ -123,11 +118,11 @@ script:
         export COVERALLS_SERVICE_NAME=travis-ci
         export COVERALLS_REPO_TOKEN=${repo_token}
         export GCOV=gcov-5
-        cmake -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCOVERALLS=ON ..
+        cmake -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCOVERALLS=ON -DCMAKE_BUILD_TYPE=Debug ..
         make -k -j2 && make coveralls
         exit
       fi
 
-    - cmake -G "Unix Makefiles" -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} ..
+    - cmake -G "Unix Makefiles" -DCMAKE_CXX_COMPILER=${CXX} -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DCMAKE_CXX_STANDARD=${CXX_STANDARD} -DCMAKE_BUILD_TYPE=Debug ..
     - make -j2
     - ./tests/tests

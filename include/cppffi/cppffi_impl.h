@@ -27,6 +27,8 @@
 #include "cppffi_begin.h"
 
 namespace ffi {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
     template <typename ReturnT, typename... ArgsT>
     inline cif<ReturnT(ArgsT...)>::cif(abi p_abi)
         : m_cif{}, m_argtypes{{nullptr}}
@@ -43,6 +45,7 @@ namespace ffi {
             CPPFFI_THROW(bad_abi());
         }
     }
+#pragma GCC diagnostic pop
 
     template <typename ReturnT, typename... ArgsT>
     template <typename Callable>
@@ -165,11 +168,11 @@ namespace ffi {
         std::array<void*, sizeof...(ArgsT)> arg_ptrs;
         _get_argument_addresses<0>(arg_ptrs);
 
-        typename type<ReturnT>::arg_type ret;
+        typename type<ReturnT>::arg_type retval;
         ffi_call(&p_callable.m_cif.m_cif, CPPFFI_FN(p_callable.m_callable),
-                 &ret, &arg_ptrs[0]);
+                 &retval, &arg_ptrs[0]);
         m_return =
-            detail::call_return<ReturnT>::access(static_cast<ReturnT&&>(ret));
+            detail::call_return<ReturnT>::access(static_cast<ReturnT>(retval));
     }
 
     template <typename ReturnT, typename... ArgsT>
@@ -221,11 +224,11 @@ namespace ffi {
     call_context<ReturnT()>::call_context(const callable<ReturnT()>& p_callable)
         : m_callable(p_callable)
     {
-        typename type<ReturnT>::arg_type ret;
+        typename type<ReturnT>::arg_type retval;
         ffi_call(&p_callable.m_cif.m_cif, CPPFFI_FN(p_callable.m_callable),
-                 &ret, nullptr);
+                 &retval, nullptr);
         m_return =
-            detail::call_return<ReturnT>::access(static_cast<ReturnT&&>(ret));
+            detail::call_return<ReturnT>::access(static_cast<ReturnT>(retval));
     }
 
     template <typename ReturnT>
